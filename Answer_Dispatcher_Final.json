@@ -1,0 +1,501 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "list",
+          "cachedResultName": "AI_Consulting_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 75006502,
+          "mode": "list",
+          "cachedResultName": "Unanswered",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=75006502"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        -832,
+        528
+      ],
+      "id": "f85abd4d-1521-4508-aaf2-d28680599c34",
+      "name": "Read Unanswered",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.Answer }}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{ $json.Status }}",
+              "operation": "notEqual",
+              "value2": "sent"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        528
+      ],
+      "id": "d733221d-a460-4945-89a3-33e740149614",
+      "name": "Has Answer & Not Sent?"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.Preferred_Method }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "Email"
+            },
+            {
+              "value2": "SMS",
+              "output": 1
+            },
+            {
+              "value2": "Phone",
+              "output": 2
+            },
+            {
+              "value2": "WhatsApp",
+              "output": 3
+            },
+            {
+              "value2": "Text",
+              "output": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        64,
+        496
+      ],
+      "id": "d3d2b806-e561-4b7d-ab6c-698914588848",
+      "name": "Route Method"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "subject": "Answer to your question",
+        "message": "=Hello,\n\nRegarding your question: {{ $json.Question }}\n\nHere is the answer: {{ $json.Answer }}\n\nBest,\nThe DewPoint Group Team",
+        "toList": [
+          "={{ $json.Contact_Detail }}"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        288,
+        240
+      ],
+      "id": "fbd3f4fc-dfe1-4157-86c7-8522523f0e31",
+      "name": "Send Email",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKnYl1BXWD98kzFo",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+18443210745",
+        "to": "={{ $json.Contact_Detail }}",
+        "message": "=The DewPoint Group: We are following up on your recent request. \n\nYour question: {{ $json.Question }}. \nAnswer: {{ $json.Answer }}\n\nReply STOP to opt out. Msg & data may apply.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        288,
+        432
+      ],
+      "id": "fca8cde3-e91b-438e-bda3-c74a032e4f9a",
+      "name": "Send SMS",
+      "credentials": {
+        "twilioApi": {
+          "id": "ibG4zc9biFzYote9",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=176913de-d0e3-4879-9bf8-4a590a31a3c9"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phoneNumberId",
+              "value": "+18443210745"
+            },
+            {
+              "name": "customer",
+              "value": "={{ {'number': $json.Contact_Detail} }}"
+            },
+            {
+              "name": "assistant",
+              "value": "={{ {'firstMessage': 'Hi, this is an automated follow-up. You asked: ' + $json.Question + '. The answer is: ' + $json.Answer + '. Have a great day!'} }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        288,
+        624
+      ],
+      "id": "3458a19a-783b-4f40-ac32-71ced833417c",
+      "name": "Trigger Outbound Call"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "list",
+          "cachedResultName": "AI_Consulting_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 75006502,
+          "mode": "list",
+          "cachedResultName": "Unanswered",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=75006502"
+        },
+        "columnToMatchOn": "Question",
+        "valueToMatchOn": "={{ $('Read Unanswered').item.json.Question }}",
+        "fieldsUi": {
+          "values": [
+            {
+              "column": "Status",
+              "fieldValue": "sent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        512,
+        528
+      ],
+      "id": "772fa1c0-2a8f-4609-a4ea-3d5d80fbd2c5",
+      "name": "Mark as Sent",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1056,
+        528
+      ],
+      "id": "b4d57c02-d9b0-4296-9af6-8782f625f81d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8a2ed046-77a8-4dc7-894b-8c6838b8e3f9",
+              "leftValue": "={{ $json.Consent_Verbal }}",
+              "rightValue": "=Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -384,
+        528
+      ],
+      "id": "b0c2efc9-7209-443a-bee2-a2529c1aef29",
+      "name": "Is Consent Given?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5b9d287a-2064-4cf6-93da-6dae5fe1d875",
+              "leftValue": "={{ $now.setZone('America/Los_Angeles').hour }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "72acbc47-0558-4c4a-82d2-7110db1c45b2",
+              "leftValue": "={{ $now.setZone('America/Los_Angeles').hour }}",
+              "rightValue": 21,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -160,
+        528
+      ],
+      "id": "0a5ff9e5-ebd3-44a8-acbb-4566118e5ca3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "patchenu@thedewpointgroup.com",
+        "subject": "pending question awaiting response",
+        "message": "You have a pending question received from a call with the receptionist waiting for your response. Please review the file linked below:\n\n||https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?pli=1&gid=75006502#gid=75006502",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        704
+      ],
+      "id": "69faf208-2c59-4da7-bd6b-21097476d421",
+      "name": "Send a message",
+      "webhookId": "91217e69-8839-4d08-99b7-ae47ca7d25a8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKnYl1BXWD98kzFo",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if there are any items in the \"False\" branch (Unanswered questions)\nif (items.length > 0) {\n    // Return exactly ONE item. This ensures the next node (Email) runs only ONCE.\n    // We also calculate the count so you can say \"You have 5 pending questions\"\n    return [{\n        json: {\n            alert: true,\n            count: items.length,\n            message: `You have ${items.length} pending questions waiting for your response.`\n        }\n    }];\n}\n\n// If no items, return nothing (stops the flow)\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        704
+      ],
+      "id": "e58ac6ee-f9ef-4d57-9dcc-cf70f0df4daf",
+      "name": "Aggregate Notifications"
+    }
+  ],
+  "connections": {
+    "Read Unanswered": {
+      "main": [
+        [
+          {
+            "node": "Has Answer & Not Sent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Answer & Not Sent?": {
+      "main": [
+        [
+          {
+            "node": "Is Consent Given?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Method": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Trigger Outbound Call",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Mark as Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Mark as Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Outbound Call": {
+      "main": [
+        [
+          {
+            "node": "Mark as Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Unanswered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Consent Given?": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Route Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Notifications": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a13417cbdb439281348507e5331019cfca882fad86baaba65eca69095c634f02"
+  }
+}
