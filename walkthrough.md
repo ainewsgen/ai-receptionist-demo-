@@ -36,6 +36,13 @@ The Knowledge Base lookup now utilizes a more reliable pattern:
 - **Match Logic**: Performs a case-insensitive search for the requested topic.
 - **Graceful Fallback**: Provides a helpful response if no specific information is found.
 
+### 5. Multi-Output Router (v3.1)
+
+The **Dept Router** has been rebuilt to version 3.1 to support the full range of AI capabilities:
+
+- **10+ Outcomes**: Correctly routes 10 distinct tool calls plus a fallback.
+- **Switch v3**: Utilizes the latest n8n Switch node structure for better reliability and debugging.
+
 ### 5. Answer Dispatcher Tool
 
 The `Answer_Dispatcher_Final.json` has been added to complete the loop for unanswered questions.
