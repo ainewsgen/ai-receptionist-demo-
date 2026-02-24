@@ -58,7 +58,7 @@ The `Answer_Dispatcher_Final.json` has been added to complete the loop for unans
 
 To connect Vapi to your n8n workflow and enable the required security secret, follow these steps:
 
-1. **Open Vapi Dashboard**: Log in and select the **Assistant** you are using for this project.
+1. **Open Vapi Dashboard**: Log in and select the **Prototype** assistant (ID: `d1a8d5e8-decb-454c-842d-3b80a4cbd7c8`).
 2. **Go to Model Settings**: Navigate to the **Model** or **Advanced** tab.
 3. **Configure System Prompt**:
     - Open [system_prompt.md](file:///Users/patchenuchiyama/Documents/AI_reciptionisht_Google/system_prompt.md).

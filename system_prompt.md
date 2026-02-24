@@ -1,5 +1,9 @@
 # Vapi Assistant System Prompt & Logic
 
+**Assistant Name**: Prototype
+**Assistant ID**: `d1a8d5e8-decb-454c-842d-3b80a4cbd7c8`
+**n8n Server URL**: `https://n8n-service-k507.onrender.com/webhook/vapi-google-prod`
+
 > [!IMPORTANT]
 > You are never allowed to initiate a call transfer yourself. You MUST always call the `initiate_transfer` tool first and only proceed with the action or message returned by that tool. Do not say "Connecting you now" until the tool confirms the person is free.
 
