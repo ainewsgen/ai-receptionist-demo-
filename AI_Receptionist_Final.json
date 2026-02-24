@@ -114,13 +114,7 @@
       "position": [
         -16,
         -208
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -163,18 +157,12 @@
       },
       "id": "e61a8743-c2cf-48e0-b6b2-53eb4f3a8bfb",
       "name": "Cal: Book Appt",
-      "type": "n8n-Nodes-base.googleCalendar",
+      "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
         -16,
         -16
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -202,8 +190,7 @@
             "Question": "={{ $('Parse Payload').item.json.args.question }}",
             "Status": "New"
           }
-        },
-        "options": {}
+        }
       },
       "id": "45ff28ea-66f0-4022-b6f6-988280916cf1",
       "name": "Sheets: Log Question",
@@ -212,13 +199,7 @@
       "position": [
         -16,
         176
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "60sBDHfGl1WSQlCE",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -249,13 +230,7 @@
       "position": [
         -16,
         368
-      ],
-      "credentials": {
-        "twilioApi": {
-          "id": "ibG4zc9biFzYote9",
-          "name": "Twilio account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -267,8 +242,7 @@
           "value": {
             "Details": "={{ $('Parse Payload').item.json.args.details }}"
           }
-        },
-        "options": {}
+        }
       },
       "id": "eb5d1192-7980-4c4c-95d2-d4e95a8ce22f",
       "name": "Sheets: Log Emergency",
@@ -277,13 +251,7 @@
       "position": [
         192,
         368
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "60sBDHfGl1WSQlCE",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -327,14 +295,7 @@
       "position": [
         192,
         560
-      ],
-      "webhookId": "51b5650e-545e-4720-ba4b-f7e1a1fda0b5",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "AKnYl1BXWD98kzFo",
-          "name": "Gmail account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -346,8 +307,7 @@
           "value": {
             "Content": "={{ $('Message Prep').item.json.content }}"
           }
-        },
-        "options": {}
+        }
       },
       "id": "c9091774-c4ac-430e-961e-550b7048612f",
       "name": "Sheets: Append Msg",
@@ -356,13 +316,7 @@
       "position": [
         384,
         560
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "60sBDHfGl1WSQlCE",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -382,7 +336,8 @@
     {
       "parameters": {
         "operation": "getAll",
-        "documentId": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE"
+        "documentId": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+        "sheetName": "knowledge_base"
       },
       "id": "5f7a124d-601b-4043-a380-905e23949c31",
       "name": "Sheets: Search KB",
@@ -391,13 +346,7 @@
       "position": [
         -16,
         736
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "60sBDHfGl1WSQlCE",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -457,13 +406,7 @@
       "position": [
         192,
         960
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -518,13 +461,7 @@
       "position": [
         800,
         864
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -534,8 +471,7 @@
           "value": "={{ $(\"Management Prep\").item.json.targetEmail }}",
           "mode": "id"
         },
-        "eventId": "={{ $json.eventId }}",
-        "options": {}
+        "eventId": "={{ $json.eventId }}"
       },
       "id": "624a59c6-e6e9-435b-81a6-150ed34f150c",
       "name": "Cal: Delete Appt",
@@ -544,13 +480,7 @@
       "position": [
         800,
         1088
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -588,8 +518,7 @@
           "value": "={{ $json.target }}",
           "mode": "id"
         },
-        "limit": 1,
-        "options": {}
+        "limit": 1
       },
       "id": "7c88e7c2-6e2d-4cb1-8fe4-0369e6738c2c",
       "name": "Cal: Check Transfer",
@@ -598,13 +527,7 @@
       "position": [
         208,
         1344
-      ],
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "RWNoLz8b1CnSnOJr",
-          "name": "Google Calendar account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -636,8 +559,8 @@
     },
     {
       "parameters": {
-        "respondWith": "text",
-        "responseBody": "OK",
+        "respondWith": "json",
+        "responseBody": "=\"OK\"",
         "options": {}
       },
       "id": "cc9acb63-cc06-4fd0-ac70-e49c0f9b9046",
@@ -674,8 +597,7 @@
           "value": {
             "Call ID": "={{ $('Parse Payload').item.json.callId }}"
           }
-        },
-        "options": {}
+        }
       },
       "id": "1d815e1e-a638-4b95-bb4b-8fb02e136f9d",
       "name": "Sheets: End Call Log",
@@ -684,18 +606,12 @@
       "position": [
         416,
         1504
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "60sBDHfGl1WSQlCE",
-          "name": "Google Sheets account"
-        }
-      }
+      ]
     },
     {
       "parameters": {
-        "respondWith": "text",
-        "responseBody": "OK",
+        "respondWith": "json",
+        "responseBody": "=\"OK\"",
         "options": {}
       },
       "id": "cf002513-e2fe-40bf-abf6-0c8873d2cdb2",
@@ -1019,6 +935,87 @@
         ]
       ]
     },
+    "Dept Router v3.1": {
+      "main": [
+        [
+          {
+            "node": "Cal: Check Avail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cal: Book Appt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Log Question",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio: Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Search KB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Management Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transfer Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: End of Call 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Cal: Check Avail": {
       "main": [
         [
@@ -1267,92 +1264,6 @@
           }
         ]
       ]
-    },
-    "Dept Router v3.1": {
-      "main": [
-        [
-          {
-            "node": "Cal: Check Avail",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Cal: Book Appt",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Sheets: Log Question",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Twilio: Send Alert",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Message Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Sheets: Search KB",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Management Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Transfer Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Resp: End of Call 200",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Default 200 OK",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Default 200 OK",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
-  },
-  "pinData": {},
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "a13417cbdb439281348507e5331019cfca882fad86baaba65eca69095c634f02"
   }
 }

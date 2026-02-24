@@ -52,6 +52,33 @@ The `Answer_Dispatcher_Final.json` has been added to complete the loop for unans
 
 ## Deployment & Verification
 
+## Configuration & Setup
+
+### 1. Vapi Dashboard Configuration
+
+To connect Vapi to your n8n workflow and enable the required security secret, follow these steps:
+
+1. **Open Vapi Dashboard**: Log in and select the **Assistant** you are using for this project.
+2. **Go to Model Settings**: Navigate to the **Model** or **Advanced** tab.
+3. **Configure System Prompt**:
+    - Open [system_prompt.md](file:///Users/patchenuchiyama/Documents/AI_reciptionisht_Google/system_prompt.md).
+    - Copy the entire contents.
+    - Paste it into the **System Prompt** or **First Message** configuration area for your assistant.
+4. **Configure Server URL**:
+    - Find the **Server** or **Webhooks** section.
+    - Set the **URL** to your n8n Production Webhook: `https://n8n-service-k507.onrender.com/webhook/vapi-google-prod`
+5. **Add Security Header**:
+    - Look for the **Headers** or **Custom Headers** field.
+    - Click **Add Header**.
+    - **Key**: `x-vapi-secret`
+    - **Value**: `T4e_d3wP0int_Gr0up_S3cret_2026!`
+6. **Save Changes**: Ensure you click **Save** at the bottom or top of the page.
+
+> [!IMPORTANT]
+> This header must exactly match the `VAPI_SECRET` defined in your n8n **Configuration** node for the security check to pass.
+
+### 2. Import & Activation
+
 ### Import Instructions
 
 1. Download [AI_Receptionist_Final.json](file:///Users/patchenuchiyama/Documents/AI_reciptionisht_Google/AI_Receptionist_Final.json) and [Answer_Dispatcher_Final.json](file:///Users/patchenuchiyama/Documents/AI_reciptionisht_Google/Answer_Dispatcher_Final.json).
