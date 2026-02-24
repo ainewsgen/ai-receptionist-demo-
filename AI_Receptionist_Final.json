@@ -8,14 +8,15 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "webhook-master",
+      "id": "2c27ae5e-39bb-4979-8f00-1973f2ca90b3",
       "name": "Vapi Inbound",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        0,
-        0
-      ]
+        -1360,
+        608
+      ],
+      "webhookId": "34a8e013-88e5-4e81-8dc6-acc6a2814542"
     },
     {
       "parameters": {
@@ -37,13 +38,13 @@
         },
         "options": {}
       },
-      "id": "config-node",
+      "id": "fd9f2537-526c-48af-ae6d-a8561409a7a5",
       "name": "Configuration",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
       "position": [
-        200,
-        0
+        -1104,
+        608
       ]
     },
     {
@@ -57,13 +58,13 @@
           ]
         }
       },
-      "id": "security-node",
+      "id": "c68c2dea-af45-456f-a506-ec972973c151",
       "name": "Security: Verify Secret",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        400,
-        0
+        -912,
+        608
       ]
     },
     {
@@ -74,85 +75,26 @@
           "responseCode": 401
         }
       },
-      "id": "unauth-node",
+      "id": "14fcb3de-3f0f-4886-a4ba-e096b6360c94",
       "name": "401 Unauthorized",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        400,
-        200
+        -880,
+        928
       ]
     },
     {
       "parameters": {
         "jsCode": "const body = $json.body;\nconst message = body.message || {};\nconst toolCalls = message.toolCalls || [];\nconst tool = toolCalls.length > 0 ? toolCalls[0] : null;\nconst toolId = tool ? tool.id : null;\nconst toolName = tool ? tool.function.name : (message.type === 'end-of-call-report' ? 'end_of_call' : 'no_tool');\nconst args = tool ? tool.function.arguments : {};\n\nconst callerNumber = message.customer?.number || 'Unknown';\nconst callerName = args.caller_name || message.customer?.name || 'Caller';\n\nconst config = $('Configuration').item.json;\nconst directory = {\n    \"patchen\": config.PATCHEN_EMAIL,\n    \"mike\": config.MIKE_EMAIL,\n    \"support\": \"support@thedewpointgroup.com\",\n    \"default\": config.PATCHEN_EMAIL\n};\nlet targetName = (args.target_name || args.person || args.recipient_name || \"Patchen\").toLowerCase();\nlet targetEmail = directory[targetName] || directory[\"default\"];\n\nlet targetDateRaw = args.startTime || args.date || args.new_start_time || new Date().toISOString();\nconst d = new Date(targetDateRaw);\nconst availStart = new Date(d);\navailStart.setUTCHours(0,0,0,0);\nconst availEnd = new Date(d);\navailEnd.setUTCHours(23,59,59,999);\n\nconst now = new Date();\nconst searchStart = new Date(now.getTime() - 60 * 60000).toISOString(); \nconst searchEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();\n\nreturn [{\n    json: {\n        toolName, toolId, args, callerNumber, callerName,\n        targetName, targetEmail, availStart: availStart.toISOString(), availEnd: availEnd.toISOString(),\n        searchStart, searchEnd\n    }\n}];"
       },
-      "id": "parse-payload-node",
+      "id": "b49a5de1-1c99-428d-b6f1-07a4b0da8f66",
       "name": "Parse Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        600,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "dataType": "string",
-        "value1": "={{ $json.toolName }}",
-        "rules": {
-          "rules": [
-            {
-              "value2": "check_availability",
-              "output": 0
-            },
-            {
-              "value2": "book_appointment",
-              "output": 1
-            },
-            {
-              "value2": "log_unanswered_question",
-              "output": 2
-            },
-            {
-              "value2": "escalate_emergency",
-              "output": 3
-            },
-            {
-              "value2": "take_message",
-              "output": 4
-            },
-            {
-              "value2": "lookup_service",
-              "output": 5
-            },
-            {
-              "value2": "manage_appointment",
-              "output": 6
-            },
-            {
-              "value2": "initiate_transfer",
-              "output": 7
-            },
-            {
-              "value2": "end_of_call",
-              "output": 8
-            },
-            {
-              "value2": "no_tool",
-              "output": 9
-            }
-          ]
-        },
-        "fallbackOutput": 9
-      },
-      "id": "router-node",
-      "name": "Dept Router V3",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 1,
-      "position": [
-        800,
-        0
+        -704,
+        592
       ]
     },
     {
@@ -163,32 +105,34 @@
           "value": "={{ $('Parse Payload').item.json.targetEmail }}",
           "mode": "id"
         },
-        "timeMin": "={{ $('Parse Payload').item.json.availStart }}",
-        "timeMax": "={{ $('Parse Payload').item.json.availEnd }}",
-        "options": {
-          "recurringEventHandling": "expand"
-        }
+        "options": {}
       },
-      "id": "cal-avail",
+      "id": "da0dc207-26a8-4af1-b6dc-5bd81ab05682",
       "name": "Cal: Check Avail",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1000,
-        -600
-      ]
+        -16,
+        -208
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
         "jsCode": "const items = $input.all();\nconst isBusy = items.length > 0;\nreturn [{ json: { result: isBusy ? `They are busy.` : `They are available.` } }];"
       },
-      "id": "logic-avail",
+      "id": "23f0eab9-c16d-438c-83ab-202afa548973",
       "name": "Logic: Calc Slots",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1200,
-        -600
+        192,
+        -208
       ]
     },
     {
@@ -197,18 +141,17 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: $json.result }] }) }}",
         "options": {}
       },
-      "id": "resp-avail",
+      "id": "46b8b231-9f2c-4509-bbad-6355dc62010a",
       "name": "Resp: Availability",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1400,
-        -600
+        384,
+        -208
       ]
     },
     {
       "parameters": {
-        "operation": "create",
         "calendar": {
           "__rl": true,
           "value": "={{ $('Parse Payload').item.json.targetEmail }}",
@@ -216,19 +159,22 @@
         },
         "start": "={{ $('Parse Payload').item.json.args.startTime }}",
         "end": "={{ $('Parse Payload').item.json.args.endTime }}",
-        "summary": "={{ $('Parse Payload').item.json.args.reason || 'Meeting' }}",
-        "options": {
-          "attendees": "={{ $('Parse Payload').item.json.args.email }}"
-        }
+        "additionalFields": {}
       },
-      "id": "cal-book",
+      "id": "e61a8743-c2cf-48e0-b6b2-53eb4f3a8bfb",
       "name": "Cal: Book Appt",
-      "type": "n8n-nodes-base.googleCalendar",
+      "type": "n8n-Nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1000,
-        -450
-      ]
+        -16,
+        -16
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
@@ -236,13 +182,13 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'success' } }] }) }}",
         "options": {}
       },
-      "id": "resp-book",
+      "id": "3678963d-2dbd-4a28-b724-b4ac13919885",
       "name": "Resp: Booked",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1200,
-        -450
+        192,
+        -16
       ]
     },
     {
@@ -256,16 +202,23 @@
             "Question": "={{ $('Parse Payload').item.json.args.question }}",
             "Status": "New"
           }
-        }
+        },
+        "options": {}
       },
-      "id": "sheet-q",
+      "id": "45ff28ea-66f0-4022-b6f6-988280916cf1",
       "name": "Sheets: Log Question",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1000,
-        -300
-      ]
+        -16,
+        176
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
     },
     {
       "parameters": {
@@ -273,13 +226,13 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'logged' } }] }) }}",
         "options": {}
       },
-      "id": "resp-q",
+      "id": "a5c72a46-d56c-4a61-8e73-481a812c21ec",
       "name": "Resp: Question",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1200,
-        -300
+        192,
+        176
       ]
     },
     {
@@ -289,14 +242,20 @@
         "message": "=URGENT Emergency Alert: {{ $('Parse Payload').item.json.args.details }}",
         "options": {}
       },
-      "id": "twilio-alert",
+      "id": "0a9ef208-f256-4404-9e3f-694a7e7b2269",
       "name": "Twilio: Send Alert",
       "type": "n8n-nodes-base.twilio",
       "typeVersion": 1,
       "position": [
-        1000,
-        -150
-      ]
+        -16,
+        368
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "ibG4zc9biFzYote9",
+          "name": "Twilio account"
+        }
+      }
     },
     {
       "parameters": {
@@ -308,16 +267,23 @@
           "value": {
             "Details": "={{ $('Parse Payload').item.json.args.details }}"
           }
-        }
+        },
+        "options": {}
       },
-      "id": "sheet-em",
+      "id": "eb5d1192-7980-4c4c-95d2-d4e95a8ce22f",
       "name": "Sheets: Log Emergency",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1200,
-        -150
-      ]
+        192,
+        368
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
     },
     {
       "parameters": {
@@ -325,26 +291,26 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'escalated' } }] }) }}",
         "options": {}
       },
-      "id": "resp-em",
+      "id": "a31e28e4-b1c5-4f7e-b163-5e0337e47de1",
       "name": "Resp: Escalated",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1400,
-        -150
+        384,
+        368
       ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { recipient: $('Parse Payload').item.json.targetEmail, content: $('Parse Payload').item.json.args.message_content } }];"
       },
-      "id": "msg-prep",
+      "id": "30d3dac6-e0e8-4eab-a266-4b053752758f",
       "name": "Message Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        0
+        -16,
+        560
       ]
     },
     {
@@ -354,14 +320,21 @@
         "message": "={{ $json.content }}",
         "options": {}
       },
-      "id": "gmail-send",
+      "id": "d4e3aa5b-c568-4ee2-ab82-70d77abccd44",
       "name": "Gmail: Send Message",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        1200,
-        0
-      ]
+        192,
+        560
+      ],
+      "webhookId": "51b5650e-545e-4720-ba4b-f7e1a1fda0b5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AKnYl1BXWD98kzFo",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
@@ -373,16 +346,23 @@
           "value": {
             "Content": "={{ $('Message Prep').item.json.content }}"
           }
-        }
+        },
+        "options": {}
       },
-      "id": "sheet-msg",
+      "id": "c9091774-c4ac-430e-961e-550b7048612f",
       "name": "Sheets: Append Msg",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1400,
-        0
-      ]
+        384,
+        560
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
     },
     {
       "parameters": {
@@ -390,42 +370,46 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: \"Message delivered\" }] }) }}",
         "options": {}
       },
-      "id": "resp-msg",
+      "id": "99105f6d-dbed-4409-83bb-19659164d237",
       "name": "Resp: Message Taken",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1600,
-        0
+        592,
+        560
       ]
     },
     {
       "parameters": {
         "operation": "getAll",
-        "documentId": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
-        "sheetName": "knowledge_base",
-        "options": {}
+        "documentId": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE"
       },
-      "id": "sheet-kb",
+      "id": "5f7a124d-601b-4043-a380-905e23949c31",
       "name": "Sheets: Search KB",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1000,
-        150
-      ]
+        -16,
+        736
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
     },
     {
       "parameters": {
         "jsCode": "const rows = $input.all().map(i => i.json);\nconst topic = ($('Parse Payload').item.json.args.topic || '').toLowerCase();\nconst match = rows.find(r => (r.Topic || '').toLowerCase().includes(topic));\nreturn { json: { result: match ? match.Details : \"No info found.\" } };"
       },
-      "id": "logic-kb",
+      "id": "0e68dd17-6583-4511-9108-f317e6d8fd5c",
       "name": "Logic: KB Search",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1200,
-        150
+        192,
+        736
       ]
     },
     {
@@ -434,26 +418,26 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: $json.result }] }) }}",
         "options": {}
       },
-      "id": "resp-kb",
+      "id": "c6dfd657-20bf-467b-b0a3-87a794150016",
       "name": "Resp: KB",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1400,
-        150
+        384,
+        736
       ]
     },
     {
       "parameters": {
         "jsCode": "const payload = $(\"Parse Payload\").item.json;\nreturn [{ json: { targetEmail: payload.targetEmail, action: payload.args.action, startTime: payload.args.new_start_time || payload.args.startTime, email: payload.args.customer_email || payload.args.email } }];"
       },
-      "id": "mng-prep",
+      "id": "ad8f7c85-8ce6-4580-941f-2c614e0c88e0",
       "name": "Management Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        300
+        -16,
+        960
       ]
     },
     {
@@ -464,30 +448,34 @@
           "value": "={{ $json.targetEmail }}",
           "mode": "id"
         },
-        "options": {
-          "q": "={{ $json.email }}"
-        }
+        "options": {}
       },
-      "id": "cal-mng-search",
+      "id": "9dcda7a7-ccae-46b1-ac91-e353ef69a2ea",
       "name": "Cal: Search Appt",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1200,
-        300
-      ]
+        192,
+        960
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
         "jsCode": "const match = $input.all().length > 0 ? $input.all()[0].json : null;\nconst prep = $(\"Management Prep\").item.json;\nreturn [{ json: { eventId: match ? match.id : null, action: prep.action, startTime: prep.startTime } }];"
       },
-      "id": "logic-mng",
+      "id": "5ae3dbd6-0ce7-4884-bce5-770c37f8814a",
       "name": "Logic: Mng Action",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        300
+        384,
+        960
       ]
     },
     {
@@ -501,13 +489,13 @@
           ]
         }
       },
-      "id": "mng-router",
+      "id": "d5f09060-f084-4561-95e3-6da4f6c95acc",
       "name": "Logic: Action Router",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        1600,
-        300
+        592,
+        960
       ]
     },
     {
@@ -523,14 +511,20 @@
           "start": "={{ $(\"Management Prep\").item.json.startTime }}"
         }
       },
-      "id": "cal-upd",
+      "id": "f35fb2a4-a649-4f67-b26f-4ced65b32ff4",
       "name": "Cal: Update Appt",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1800,
-        200
-      ]
+        800,
+        864
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
@@ -540,16 +534,23 @@
           "value": "={{ $(\"Management Prep\").item.json.targetEmail }}",
           "mode": "id"
         },
-        "eventId": "={{ $json.eventId }}"
+        "eventId": "={{ $json.eventId }}",
+        "options": {}
       },
-      "id": "cal-del",
+      "id": "624a59c6-e6e9-435b-81a6-150ed34f150c",
       "name": "Cal: Delete Appt",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1800,
-        400
-      ]
+        800,
+        1088
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
@@ -557,26 +558,26 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: \"Management action completed.\" }] }) }}",
         "options": {}
       },
-      "id": "resp-mng",
+      "id": "3cf2fc36-73e2-4686-af3a-b6ddd519cb97",
       "name": "Resp: Managed",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        2000,
-        300
+        992,
+        960
       ]
     },
     {
       "parameters": {
         "jsCode": "return [{ json: { target: $('Parse Payload').item.json.targetEmail } }];"
       },
-      "id": "trans-prep",
+      "id": "6b3b21e4-3865-489e-8d72-06aa54c1ad41",
       "name": "Transfer Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1000,
-        450
+        0,
+        1344
       ]
     },
     {
@@ -587,28 +588,35 @@
           "value": "={{ $json.target }}",
           "mode": "id"
         },
-        "limit": 1
+        "limit": 1,
+        "options": {}
       },
-      "id": "cal-trans-check",
+      "id": "7c88e7c2-6e2d-4cb1-8fe4-0369e6738c2c",
       "name": "Cal: Check Transfer",
       "type": "n8n-nodes-base.googleCalendar",
       "typeVersion": 1.1,
       "position": [
-        1200,
-        450
-      ]
+        208,
+        1344
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "RWNoLz8b1CnSnOJr",
+          "name": "Google Calendar account"
+        }
+      }
     },
     {
       "parameters": {
         "jsCode": "const busy = $input.all().length > 0;\nreturn [{ json: { status: busy ? \"busy\" : \"available\" } }];"
       },
-      "id": "logic-trans",
+      "id": "e590d65d-6875-4c9a-8343-e0a518c26238",
       "name": "Logic: Trans Avail",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1400,
-        450
+        400,
+        1344
       ]
     },
     {
@@ -617,13 +625,13 @@
         "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: $json.status } }] }) }}",
         "options": {}
       },
-      "id": "resp-trans",
+      "id": "b16b9485-7adf-429d-a033-d21ff61f0f74",
       "name": "Resp: Transfer",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1600,
-        450
+        608,
+        1344
       ]
     },
     {
@@ -632,13 +640,13 @@
         "responseBody": "OK",
         "options": {}
       },
-      "id": "resp-eoc",
+      "id": "cc9acb63-cc06-4fd0-ac70-e49c0f9b9046",
       "name": "Resp: End of Call 200",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1000,
-        600
+        16,
+        1504
       ]
     },
     {
@@ -646,13 +654,13 @@
         "amount": 45,
         "unit": "seconds"
       },
-      "id": "wait-node",
+      "id": "adf4bfae-f2ae-4b26-a513-85d8e3f3d11a",
       "name": "Wait 45 Seconds",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        1200,
-        600
+        224,
+        1504
       ],
       "webhookId": "cb315e12-d3a0-49ad-844c-2bc158866187"
     },
@@ -666,16 +674,23 @@
           "value": {
             "Call ID": "={{ $('Parse Payload').item.json.callId }}"
           }
-        }
+        },
+        "options": {}
       },
-      "id": "sheet-log",
+      "id": "1d815e1e-a638-4b95-bb4b-8fb02e136f9d",
       "name": "Sheets: End Call Log",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
       "position": [
-        1400,
-        600
-      ]
+        416,
+        1504
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "60sBDHfGl1WSQlCE",
+          "name": "Google Sheets account"
+        }
+      }
     },
     {
       "parameters": {
@@ -683,13 +698,272 @@
         "responseBody": "OK",
         "options": {}
       },
-      "id": "resp-ok",
+      "id": "cf002513-e2fe-40bf-abf6-0c8873d2cdb2",
       "name": "Default 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1000,
-        750
+        32,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "check_availability",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7d0392bd-52f9-4973-abda-fc1f29e19fc3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "check_availability"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "book_appointment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ebdd3045-7453-43ec-829b-07cf89acd383"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "book_appointment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "log_unanswered_question",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "91143a91-9ceb-41be-95c6-89bf6b302980"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "log_unanswered_question"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "escalate_emergency",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ccebea15-deca-4bbf-ada7-b76c4df7421f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "escalate_emergency"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "take_message",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3d61d2c6-278f-47e7-a705-1770f53f6de9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "take_message"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "lookup_service",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e91ec65c-8075-4a90-9086-5a4f0b5b2f48"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lookup_service"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "manage_appointment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d4b9207b-2f6c-4914-a018-949565988bd7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "manage_appointment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "initiate_transfer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5c59cc9a-eb2e-4352-8b5b-ea112064a559"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "initiate_transfer"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "end_of_call",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0e095eab-1b6a-4bca-b510-7837280fa58d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "end_of_call"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "no_tool",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "da49db04-4417-4fb1-a0a1-cb6489978d48"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no_tool"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "8f95a313-876c-471f-a898-e5e61b23f445",
+      "name": "Dept Router v3.1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -512,
+        448
       ]
     }
   ],
@@ -738,81 +1012,7 @@
       "main": [
         [
           {
-            "node": "Dept Router V3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Dept Router V3": {
-      "main": [
-        [
-          {
-            "node": "Cal: Check Avail",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Cal: Book Appt",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Sheets: Log Question",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Twilio: Send Alert",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Message Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Sheets: Search KB",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Management Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Transfer Prep",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Resp: End of Call 200",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Default 200 OK",
+            "node": "Dept Router v3.1",
             "type": "main",
             "index": 0
           }
@@ -1067,6 +1267,92 @@
           }
         ]
       ]
+    },
+    "Dept Router v3.1": {
+      "main": [
+        [
+          {
+            "node": "Cal: Check Avail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cal: Book Appt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Log Question",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio: Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Search KB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Management Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transfer Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: End of Call 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a13417cbdb439281348507e5331019cfca882fad86baaba65eca69095c634f02"
   }
 }
