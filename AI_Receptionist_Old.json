@@ -1,0 +1,734 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "vapi-handler",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                -1040,
+                -96
+            ],
+            "id": "6accd543-9303-4329-b51d-adbd17914f59",
+            "name": "Vapi Webhook",
+            "webhookId": "da5a154b-4672-4934-ae8a-e6e85fa34c9b",
+            "executeOnce": false
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+                    "mode": "list",
+                    "cachedResultName": "AI_Consulting_DB",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": 75006502,
+                    "mode": "list",
+                    "cachedResultName": "Unanswered",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=75006502"
+                },
+                "fieldsUi": {
+                    "fieldValues": [
+                        {
+                            "fieldId": "Question",
+                            "fieldValue": "={{ $json.body.message.toolCalls[0].function.arguments.question }}"
+                        },
+                        {
+                            "fieldId": "Preferred_Method",
+                            "fieldValue": "={{ $json.body.message.toolCalls[0].function.arguments.preferred_method }}"
+                        },
+                        {
+                            "fieldId": "Contact_Detail",
+                            "fieldValue": "={{ $json.body.message.toolCalls[0].function.arguments.contact_detail.includes(\"@\") ? $json.body.message.toolCalls[0].function.arguments.contact_detail : ($json.body.message.customer?.number || $json.body.message.call?.customer?.number) }}"
+                        },
+                        {
+                            "fieldId": "Status",
+                            "fieldValue": "=New"
+                        },
+                        {
+                            "fieldId": "Consent_Verbal",
+                            "fieldValue": "={{ $json.body.message.toolCalls[0].function.arguments.consent_received ? 'Yes' : 'No' }}"
+                        },
+                        {
+                            "fieldId": "Consent_Timestamp",
+                            "fieldValue": "={{$now}}"
+                        },
+                        {
+                            "fieldId": "Call_Recording_URL",
+                            "fieldValue": "={{ $json.body.message.call.recordingUrl }}"
+                        },
+                        {
+                            "fieldId": "Call_ID",
+                            "fieldValue": "={{ $json.body.message.call?.id || $json.body.callId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 3,
+            "position": [
+                -368,
+                576
+            ],
+            "id": "2233b770-a65b-453c-af26-6618c94f481b",
+            "name": "Save Unanswered",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "zEZUhtX90TeHPYJ3",
+                    "name": "Google Sheets account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $node[\"Dept Router\"].json.body.message.toolCalls[0].id }}\",\n      \"result\": \"I've logged that question for the team. Consent for text: {{ $node[\"Dept Router\"].json.body.message.toolCalls[0].function.arguments.consent_received ? 'Granted' : 'Denied' }}.\"\n    }\n  ]\n}",
+                "options": {
+                    "responseCode": 200
+                }
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                -144,
+                576
+            ],
+            "id": "65d2490a-6490-45c4-ba70-8909c75186c5",
+            "name": "Resp: Logged"
+        },
+        {
+            "parameters": {
+                "operation": "getAll",
+                "calendar": {
+                    "__rl": true,
+                    "value": "ainewsgenerator1@gmail.com",
+                    "mode": "list",
+                    "cachedResultName": "ainewsgenerator1@gmail.com"
+                },
+                "options": {
+                    "timeMin": "={{ DateTime.fromISO($json.body.message.toolCalls[0].function.arguments.date).setZone('America/Los_Angeles').startOf('day').toISO() }}",
+                    "timeMax": "={{ DateTime.fromISO($json.arguments.date).setZone('America/Los_Angeles').endOf('day').toISO() }}",
+                    "singleEvents": false,
+                    "timeZone": {
+                        "__rl": true,
+                        "value": "America/Los_Angeles",
+                        "mode": "list",
+                        "cachedResultName": "America/Los_Angeles"
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.googleCalendar",
+            "typeVersion": 1,
+            "position": [
+                -368,
+                -192
+            ],
+            "id": "2c39d653-2ab3-42e0-82f0-433c2fa1d4e8",
+            "name": "Get Calendar Events",
+            "alwaysOutputData": true,
+            "credentials": {
+                "googleCalendarOAuth2Api": {
+                    "id": "8OImpRT1mNH3TBEO",
+                    "name": "Google Calendar account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                80,
+                -192
+            ],
+            "id": "bdc8d5a6-ddd9-4b7a-9a56-9fae2b915a0c",
+            "name": "Resp: Availability"
+        },
+        {
+            "parameters": {
+                "calendar": {
+                    "__rl": true,
+                    "value": "ainewsgenerator1@gmail.com",
+                    "mode": "list",
+                    "cachedResultName": "ainewsgenerator1@gmail.com"
+                },
+                "start": "={{ $json.start }}",
+                "end": "={{ $json.end }}",
+                "additionalFields": {
+                    "attendees": [
+                        "={{ $json.attendeeEmail }}"
+                    ],
+                    "description": "={{ $json.description }}",
+                    "guestsCanInviteOthers": true,
+                    "summary": "={{ $json.summary }}"
+                }
+            },
+            "type": "n8n-nodes-base.googleCalendar",
+            "typeVersion": 1,
+            "position": [
+                -144,
+                0
+            ],
+            "id": "a8736273-be49-4561-838f-287a989100b8",
+            "name": "Book Event",
+            "credentials": {
+                "googleCalendarOAuth2Api": {
+                    "id": "8OImpRT1mNH3TBEO",
+                    "name": "Google Calendar account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                304,
+                0
+            ],
+            "id": "c580785e-393b-4dad-bb89-e8403b199037",
+            "name": "Resp: Booked"
+        },
+        {
+            "parameters": {
+                "from": "+18443210745",
+                "to": "+18186204362",
+                "message": "=URGENT: Emergency reported by {{ $('Vapi Webhook').first().json.body.message.customer.number }}.\nDetails: {{ $json.body.message.toolCalls[0].function.arguments.details }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.twilio",
+            "typeVersion": 1,
+            "position": [
+                -368,
+                192
+            ],
+            "id": "10635f65-9c2f-4646-bbca-fef569c19605",
+            "name": "Twilio Alert",
+            "credentials": {
+                "twilioApi": {
+                    "id": "zV4FOLCrY32rOWlY",
+                    "name": "Twilio account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $node[\"Gatekeeper\"].json.body.message.toolCalls[0].id }}\",\n      \"result\": \"Emergency alert processed. SMS sent to authorities.\"\n    }\n  ]\n}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                80,
+                192
+            ],
+            "id": "da1ae4c6-44dc-4f0c-8060-09b0b981caa7",
+            "name": "Resp: SMS"
+        },
+        {
+            "parameters": {
+                "documentId": {
+                    "__rl": true,
+                    "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+                    "mode": "list",
+                    "cachedResultName": "AI_Consulting_DB",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": 1188060499,
+                    "mode": "list",
+                    "cachedResultName": "KnowledgeBase",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=1188060499"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 3,
+            "position": [
+                -368,
+                384
+            ],
+            "id": "efa7464a-7e13-4be1-88f2-2c50a49c93fb",
+            "name": "Lookup Info",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "zEZUhtX90TeHPYJ3",
+                    "name": "Google Sheets account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                80,
+                384
+            ],
+            "id": "867a3202-ff72-4d84-8216-7d9afc5fd323",
+            "name": "Resp: KB Info"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+                    "mode": "list",
+                    "cachedResultName": "AI_Consulting_DB",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": 7341913,
+                    "mode": "list",
+                    "cachedResultName": "emergency_Log",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=7341913"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "Timestamp": "={{$now}}",
+                        "Status": "Alert Sent",
+                        "Details": "={{ $('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.details }}",
+                        "Callback_number": "={{ $('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.Callback_number?.includes('[') ? $('Gatekeeper').first().json.body.message.customer.number : ($('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.Callback_number || $('Gatekeeper').first().json.body.message.customer.number) }}",
+                        "Call_Disposition": "={{ $('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.call_disposition }}",
+                        "CALL_ID": "={{ $('Gatekeeper').first().json.body.message.call.id }}",
+                        "Contact_Name": "={{ $('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.contact_name }}",
+                        "Location": "={{ $('Gatekeeper').first().json.body.message.toolCalls[0].function.arguments.location }}"
+                    },
+                    "matchingColumns": [],
+                    "schema": [
+                        {
+                            "id": "Timestamp",
+                            "displayName": "Timestamp",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true
+                        },
+                        {
+                            "id": "Details",
+                            "displayName": "Details",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true
+                        },
+                        {
+                            "id": "Callback_number",
+                            "displayName": "Callback_number",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true
+                        },
+                        {
+                            "id": "Status",
+                            "displayName": "Status",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        },
+                        {
+                            "id": "CALL_ID",
+                            "displayName": "CALL_ID",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        },
+                        {
+                            "id": "Contact_Name",
+                            "displayName": "Contact_Name",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        },
+                        {
+                            "id": "Location",
+                            "displayName": "Location",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        },
+                        {
+                            "id": "Call_Disposition",
+                            "displayName": "Call_Disposition",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        }
+                    ],
+                    "attemptToConvertTypes": false,
+                    "convertFieldsToString": false
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.7,
+            "position": [
+                -144,
+                192
+            ],
+            "id": "ef78c705-fa44-4566-9884-420724e834de",
+            "name": "Append row in sheet",
+            "executeOnce": true,
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "zEZUhtX90TeHPYJ3",
+                    "name": "Google Sheets account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "695ab045-995e-4d62-9d8e-a7ee4ae54099",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "check_availability",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "e2e5312b-6abf-450a-9364-2dcee74f95ac",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "=book_appointment",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "6cb586cf-3ee4-418f-bf7a-490afc6c3c3b",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "emergency_alert",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "91c6e399-8db2-46d7-85b9-576ecfc172c6",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "=lookup_service",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "d0fc985b-3806-4d7e-954d-ae7a06ed9399",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "unknown",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "contains"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "f49dacca-14c5-48b6-afd3-8e2b51916fc8",
+                                        "leftValue": "={{ $json.body.message.toolCalls[0].function.name }}",
+                                        "rightValue": "manage_appointment",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            }
+                        }
+                    ]
+                },
+                "options": {
+                    "fallbackOutput": "extra"
+                }
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.4,
+            "position": [
+                -592,
+                304
+            ],
+            "id": "32c11f74-f6ec-49dd-98dd-e84ebd7e78c9",
+            "name": "Dept Router"
+        },
+        {
+            "parameters": {
+                "operation": "appendOrUpdate",
+                "documentId": {
+                    "__rl": true,
+                    "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+                    "mode": "list",
+                    "cachedResultName": "AI_Consulting_DB",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": 75006502,
+                    "mode": "list",
+                    "cachedResultName": "Unanswered",
+                    "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE/edit#gid=75006502"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "Call_ID": "={{ $json.body.message.call?.id || $json.body.callId || $json.headers[\"x-call-id\"] }}",
+                        "Transcript": "={{ $json.body.message.artifact?.transcript || \"Transcript processing...\" }}",
+                        "Call_Recording_URL": "={{ $json.body.message.artifact?.recordingUrl || $json.body.message.call?.artifact?.recordingUrl }}"
+                    },
+                    "matchingColumns": [
+                        "Call_ID"
+                    ],
+                    "schema": [
+                        {
+                            "id": "Call_ID",
+                            "displayName": "Call_ID",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "canBeUsedToMatch": true,
+                            "removed": false
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.7,
+            "position": [
+                -144,
+                -384
+            ],
+            "id": "575f8104-e413-4602-9021-bacc14cdc33b",
+            "name": "update call record",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "zEZUhtX90TeHPYJ3",
+                    "name": "Google Sheets account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.body.message.type }}",
+                                        "rightValue": "end-of-call-report",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        },
+                                        "id": "6df676f2-a959-4d9c-b52e-3ae75389b707"
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Recording"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 3
+                                },
+                                "conditions": [
+                                    {
+                                        "id": "7b4f5b5a-2b4f-4673-a88a-50e0d0d2e0f9",
+                                        "leftValue": "={{ $json.body.message.type }}",
+                                        "rightValue": "tool-calls",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals",
+                                            "name": "filter.operator.equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": true,
+                            "outputKey": "Tools"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.4,
+            "position": [
+                -816,
+                -96
+            ],
+            "id": "06221ae7-da31-4e41-a6e8-46cd8b26ed79",
+            "name": "Gatekeeper"
+        }
+    ],
+    "connections": {
+        "Vapi Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Gatekeeper",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gatekeeper": {
+            "main": [
+                [
+                    {
+                        "node": "update call record",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Dept Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

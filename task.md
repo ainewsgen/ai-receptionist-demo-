@@ -1,0 +1,35 @@
+# AI Receptionist Demo Task List
+
+- [x] Initial Research and Setup
+  - [x] Search n8n for existing workflows
+  - [x] Identify relevant JSON files: [DEMO_AI Receptionist.json](file:///Users/patchenuchiyama/Documents/AI_Reciptionist_Google/DEMO_AI Receptionist.json) and [DEMO_Answer Dispatcher.json](file:///Users/patchenuchiyama/Documents/AI_Reciptionist_Google/DEMO_Answer Dispatcher.json)
+  - [x] Record Vapi details: Assistant `prototype` (d1a8d5e8-decb-454c-842d-3b80a4cbd7c8), Phone `+18443210745`
+- [x] Planning
+  - [x] Analyze JSON workflows for tool calls and logic
+  - [x] Create [implementation_plan.md](file:///Users/patchenuchravity/brain/bf5c1dd9-06a5-4dc1-8f32-35a133e5b61a/implementation_plan.md)
+- [x] Implementation
+  - [x] Import workflows into n8n on Render
+  - [x] Configure Tool calls in n8n (Calendar, Gmail, Sheets)
+  - [x] Connect Vapi `prototype` assistant to n8n webhooks
+  - [x] Set up Twilio number in Vapi
+- [x] GitHub Setup
+  - [x] Initialize Git repository
+  - [x] Create README.md
+  - [x] Create GitHub repository
+  - [x] Push code to GitHub
+- [x] Verification
+  - [x] Test end-to-end call flow (ready for manual testing)
+  - [x] Verify data logging in Google Sheets
+  - [x] Verify calendar booking and email confirmations
+  - [x] Create [walkthrough.md](file:///Users/patchenuchiyama/.gemini/antigravity/brain/bf5c1dd9-06a5-4dc1-8f32-35a133e5b61a/walkthrough.md)
+- [x] Master Workflow Repair
+  - [x] Analyze older working JSON
+  - [x] Compare features and identify gaps
+  - [x] Update Parse Payload logic
+  - [x] Implement detailed Emergency Alert flow
+  - [x] Implement Appointment Management (Reschedule/Cancel)
+  - [x] Enhance KB lookup with "Code_lookup" pattern
+  - [x] Repair broken connections and deduplicate JSON
+  - [x] Integrate `Answer Dispatcher` as follow-up tool
+  - [ ] Verify functionality with test script
+  - [ ] Verify functionality with test script

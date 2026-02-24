@@ -1,0 +1,1194 @@
+{
+  "name": "DewPoint Master - Complete Google Edition",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-google-prod",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-master",
+      "name": "Vapi Inbound",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "VAPI_SECRET",
+              "value": "T4e_d3wP0int_Gr0up_S3cret_2026!"
+            },
+            {
+              "name": "PATCHEN_EMAIL",
+              "value": "patchenu@thedewpointgroup.com"
+            },
+            {
+              "name": "MIKE_EMAIL",
+              "value": "miked@thedewpointgroup.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "config-node",
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('Vapi Inbound').first().json.headers['x-vapi-secret'] }}",
+              "value2": "={{ $('Configuration').item.json.VAPI_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "security-node",
+      "name": "Security: Verify Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "unauth-node",
+      "name": "401 Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body;\nconst message = body.message || {};\nconst toolCalls = message.toolCalls || [];\nconst tool = toolCalls.length > 0 ? toolCalls[0] : null;\nconst toolId = tool ? tool.id : null;\nconst toolName = tool ? tool.function.name : (message.type === 'end-of-call-report' ? 'end_of_call' : 'no_tool');\nconst args = tool ? tool.function.arguments : {};\n\n// 1. EXTRACT CALL METADATA\nlet callId = message.call?.id || body.callId || '';\nconst callerNumber = message.customer?.number || 'Unknown';\nconst callerName = args.caller_name || message.customer?.name || 'Caller';\n\n// 2. END-OF-CALL DATA (Only for report type)\nlet costVapi = 0, costLlm = 0, costTts = 0, costStt = 0, totalTokens = 0, totalCost = 0;\nlet transcript = message.transcript || '';\nlet summary = message.analysis?.summary || '';\nlet recordingUrl = message.recordingUrl || '';\n\nif (message.type === 'end-of-call-report') {\n    totalCost = message.cost || 0;\n    const cb = message.costBreakdown || {};\n    costStt = cb.stt || 0;\n    costLlm = cb.llm || 0;\n    costTts = cb.tts || 0;\n    costVapi = cb.vapi || 0;\n    totalTokens = message.analysis?.tokenUsage?.total || 0;\n}\n\n// 3. TARGET IDENTIFICATION (For Transfers/Messages)\nconst config = $('Configuration').item.json;\nconst directory = {\n    \"patchen\": config.PATCHEN_EMAIL,\n    \"mike\": config.MIKE_EMAIL,\n    \"michael\": config.MIKE_EMAIL,\n    \"support\": \"support@thedewpointgroup.com\",\n    \"default\": config.PATCHEN_EMAIL\n};\nlet targetName = (args.target_name || args.person || args.recipient_name || \"Patchen\").toLowerCase();\nlet targetEmail = directory[targetName] || directory[\"default\"];\n\n// 4. DATE & TIME WINDOWS (For Calendar)\nlet targetDateRaw = args.startTime || args.date || args.new_start_time || new Date().toISOString();\nconst d = new Date(targetDateRaw);\nconst availStart = new Date(d);\navailStart.setUTCHours(0,0,0,0);\nconst availEnd = new Date(d);\navailEnd.setUTCHours(23,59,59,999);\n\n// 5. SEARCH WINDOW (For Appointment Management)\nconst now = new Date();\nconst searchStart = new Date(now.getTime() - 60 * 60000).toISOString(); \nconst searchEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();\n\n// 6. EMERGENCY METADATA\nconst emergencyData = {\n    details: args.details || 'No details provided',\n    location: args.location || 'Unknown location',\n    contact_name: args.contact_name || callerName,\n    callback: args.Callback_number || callerNumber,\n    disposition: args.call_disposition || 'Urgent'\n};\n\n// 7. COMPLIANCE & QUESTIONS\nconst questionData = {\n    question: args.question || '',\n    context: args.context || '',\n    method: args.preferred_method || 'Phone',\n    detail: args.contact_detail || callerNumber,\n    consent: args.consent_received ? 'Yes' : 'No'\n};\n\nreturn [{\n    json: {\n        toolName, toolId, args, callId, callerNumber, callerName,\n        targetName, targetEmail, availStart: availStart.toISOString(), availEnd: availEnd.toISOString(),\n        searchStart, searchEnd, emergencyData, questionData,\n        costVapi, costLlm, costTts, costStt, totalTokens, totalCost,\n        transcript, summary, recordingUrl\n    }\n}];"
+      },
+      "id": "parse-payload-node",
+      "name": "Parse Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.toolName }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "check_availability",
+              "output": 0
+            },
+            {
+              "value2": "book_appointment",
+              "output": 1
+            },
+            {
+              "value2": "log_unanswered_question",
+              "output": 2
+            },
+            {
+              "value2": "escalate_emergency",
+              "output": 3
+            },
+            {
+              "value2": "take_message",
+              "output": 4
+            },
+            {
+              "value2": "lookup_service",
+              "output": 5
+            },
+            {
+              "value2": "manage_appointment",
+              "output": 6
+            },
+            {
+              "value2": "initiate_transfer",
+              "output": 7
+            },
+            {
+              "value2": "end_of_call",
+              "output": 8
+            },
+            {
+              "value2": "no_tool",
+              "output": 9
+            }
+          ]
+        },
+        "fallbackOutput": 9
+      },
+      "id": "router-node",
+      "name": "Dept Router V3",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $('Parse Payload').item.json.targetEmail }}",
+          "mode": "id"
+        },
+        "limit": 10,
+        "timeMin": "={{ $('Parse Payload').item.json.availStart }}",
+        "timeMax": "={{ $('Parse Payload').item.json.availEnd }}",
+        "options": {
+          "recurringEventHandling": "expand"
+        }
+      },
+      "id": "cal-check-avail",
+      "name": "Cal: Check Avail",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        -700
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst targetName = $('Parse Payload').item.json.targetName || 'the team';\nconst isBusy = items.length > 0 && items[0].json && items[0].json.id ? true : false;\nreturn [{ json: { result: isBusy ? `They have conflicting appointments on that date.` : `They appear to have availability on that date.` } }];"
+      },
+      "id": "logic-slots",
+      "name": "Logic: Calc Slots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: $json.result }] }) }}",
+        "options": {}
+      },
+      "id": "resp-avail",
+      "name": "Resp: Availability",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $('Parse Payload').item.json.targetEmail }}",
+          "mode": "id"
+        },
+        "start": "={{ $('Parse Payload').item.json.args.startTime }}",
+        "end": "={{ $('Parse Payload').item.json.args.endTime }}",
+        "summary": "={{ $('Parse Payload').item.json.args.reason || 'Meeting with DewPoint Group' }}",
+        "options": {
+          "attendees": "={{ $('Parse Payload').item.json.args.email }}"
+        }
+      },
+      "id": "cal-book",
+      "name": "Cal: Book Appt",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        -550
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'success', message: 'I have booked that for you on ' + $('Parse Payload').item.json.targetName + \\\"'s calendar.\\\" } }] }) }}",
+        "options": {}
+      },
+      "id": "resp-book",
+      "name": "Resp: Booked",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -550
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "unanswered_questions",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Call ID": "={{ $(\"Parse Payload\").item.json.callId }}",
+            "Question": "={{ $(\"Parse Payload\").item.json.questionData.question }}",
+            "Context": "={{ $(\"Parse Payload\").item.json.questionData.context }}",
+            "Preferred Method": "={{ $(\"Parse Payload\").item.json.questionData.method }}",
+            "Contact Detail": "={{ $(\"Parse Payload\").item.json.questionData.detail }}",
+            "Consent Verbal": "={{ $(\"Parse Payload\").item.json.questionData.consent }}",
+            "Status": "New"
+          },
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "sheet-question",
+      "name": "Sheets: Log Question",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1200,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'logged', message: 'I have logged your question for the team.' } }] }) }}",
+        "options": {}
+      },
+      "id": "resp-question",
+      "name": "Resp: Question",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "from": "+18443210745",
+        "to": "+18186204362",
+        "message": "=🚨 URGENT: Emergency Alert\nDetails: {{ $(\"Parse Payload\").item.json.emergencyData.details }}\nLocation: {{ $(\"Parse Payload\").item.json.emergencyData.location }}\nCaller: {{ $(\"Parse Payload\").item.json.emergencyData.contact_name }}\nCallback: {{ $(\"Parse Payload\").item.json.emergencyData.callback }}",
+        "options": {}
+      },
+      "id": "twilio-alert",
+      "name": "Twilio: Send Alert",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $('Parse Payload').item.json.toolId, result: { status: 'escalated', message: 'I have notified the team immediately.' } }] }) }}",
+        "options": {}
+      },
+      "id": "resp-escalate",
+      "name": "Resp: Escalated",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Parse Payload').item.json;\nreturn [{\n  json: {\n    recipient_name: prep.targetName,\n    recipientEmail: prep.targetEmail,\n    callerName: prep.callerName || \"the caller\",\n    content: prep.args.message_content,\n    callerPhone: prep.callerNumber, \n    toolCallId: prep.toolId,\n    callId: prep.callId\n  }\n}];"
+      },
+      "id": "msg-prep",
+      "name": "Message Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.recipientEmail }}",
+        "subject": "=📞 New Message for {{ $json.recipient_name }}",
+        "message": "=<h3>📞 New Message for {{ $json.recipient_name }}</h3>\n<hr>\n<p><strong>From:</strong> {{ $json.callerName }}</p>\n<p><strong>Callback:</strong> <a href=\"tel:{{ $json.callerPhone }}\">{{ $json.callerPhone }}</a></p>\n<br>\n<p><strong>Message:</strong></p>\n<blockquote style=\"background: #f9f9f9; border-left: 5px solid #ccc; padding: 10px;\">\n  {{ $json.content }}\n</blockquote>",
+        "options": {}
+      },
+      "id": "gmail-send",
+      "name": "Gmail: Send Message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "messages",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Recipient Name": "={{ $('Message Prep').item.json.recipient_name }}",
+            "Caller Number": "={{ $('Message Prep').item.json.callerPhone }}",
+            "Call ID": "={{ $('Message Prep').item.json.callId }}",
+            "Message Content": "={{ $('Message Prep').item.json.content }}",
+            "Caller Name": "={{ $('Message Prep').item.json.callerName }}"
+          },
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "sheet-msg",
+      "name": "Sheets: Append Msg",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1600,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $('Message Prep').item.json.toolCallId }}\",\n      \"result\": \"Message successfully delivered to {{ $('Message Prep').item.json.recipient_name }}. Alex, you can now confirm this to {{ $('Message Prep').item.json.callerName }}.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "resp-msg",
+      "name": "Resp: Message Taken",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1800,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "knowledge_base",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "sheet-kb",
+      "name": "Sheets: Search KB",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1200,
+        50
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nconst topic = ($('Parse Payload').item.json.args.topic || 'pricing').toLowerCase();\nconst payload = $('Parse Payload').item.json;\n\n// Search logic from Old JSON\nlet resultText = \"\";\nconst match = rows.find(r => (r.Topic || '').toLowerCase().includes(topic));\n\nif (match) {\n    resultText = match.Details || \"I found a match but no details were listed.\";\n} else {\n    resultText = \"I currently don't have specific info on that. I can have a team member follow up if you'd like?\";\n}\n\nreturn { json: { results: [{ toolCallId: payload.toolId, result: resultText }] } };"
+      },
+      "id": "kb-logic",
+      "name": "Logic: KB Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        50
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "resp-kb",
+      "name": "Resp: KB",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        50
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Parse Payload').item.json;\nconst directory = {\n    \"patchen\": \"+18186204362\", \n    \"mike\": \"+18056605209\",\n    \"support\": \"+18186717772\"\n};\nconst targetNumber = directory[prep.targetName.toLowerCase()] || directory[\"support\"];\n\nreturn [{\n  json: {\n    targetName: prep.targetName,\n    targetEmail: prep.targetEmail,\n    targetNumber,\n    toolCallId: prep.toolId,\n    callerName: prep.callerName,\n    timeMin: new Date().toISOString(),\n    timeMax: new Date(new Date().getTime() + 10 * 60000).toISOString()\n  }\n}];"
+      },
+      "id": "trans-prep",
+      "name": "Transfer Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $json.targetEmail }}",
+          "mode": "id"
+        },
+        "limit": 1,
+        "timeMin": "={{ $json.timeMin }}",
+        "timeMax": "={{ $json.timeMax }}",
+        "options": {
+          "recurringEventHandling": "expand"
+        }
+      },
+      "id": "cal-check",
+      "name": "Cal: Check Transfer",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        350
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst prep = $('Transfer Prep').item.json;\nconst isBusy = items.length > 0 && items[0].json && items[0].json.id ? true : false;\nreturn [{\n  json: {\n    status: isBusy ? \"busy\" : \"available\",\n    targetName: prep.targetName,\n    toolCallId: prep.toolCallId,\n    callerName: prep.callerName\n  }\n}];"
+      },
+      "id": "trans-logic",
+      "name": "Logic: Trans Avail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "name": "recipient_name",
+              "value": "={{ $json.targetName }}",
+              "type": "string"
+            },
+            {
+              "name": "callerName",
+              "value": "={{ $json.callerName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "id": "trans-edit",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1800,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Transfer Prep').item.json;\nconst fields = $json;\nreturn [{\n    json: {\n        results: [{\n            toolCallId: prep.toolCallId,\n            result: {\n                status: fields.status,\n                recipient_name: fields.recipient_name,\n                callerName: fields.callerName\n            }\n        }]\n    }\n}];"
+      },
+      "id": "trans-flatten",
+      "name": "Flatten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "responseBody": "allJSON",
+        "options": {}
+      },
+      "id": "resp-trans",
+      "name": "Resp: Transfer",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2200,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "id": "resp-eoc",
+      "name": "Resp: End of Call 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 45,
+        "unit": "seconds"
+      },
+      "id": "wait-node",
+      "name": "Wait 45 Seconds",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        500
+      ],
+      "webhookId": "cb315e12-d3a0-49ad-844c-2bc158866187"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "call_logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Call ID": "={{ $('Parse Payload').item.json.callId }}",
+            "Caller Name": "={{ $('Parse Payload').item.json.callerName }}",
+            "Phone": "={{ $('Parse Payload').item.json.callerNumber }}",
+            "Summary": "={{ $('Parse Payload').item.json.summary }}",
+            "Total Cost": "={{ $('Parse Payload').item.json.totalCost }}",
+            "Tokens": "={{ $('Parse Payload').item.json.totalTokens }}",
+            "Recording URL": "={{ $('Parse Payload').item.json.recordingUrl }}"
+          },
+          "matchingColumns": []
+        },
+        "options": {}
+      },
+      "id": "sheet-log",
+      "name": "Sheets: End Call Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1600,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "id": "resp-ok",
+      "name": "Default 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        650
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Vda6Snc-wtiQY9aJDthqcC_D33onW1s8t4NFOacUBYE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "emergency_Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $now }}",
+            "Call ID": "={{ $(\"Parse Payload\").item.json.callId }}",
+            "Details": "={{ $(\"Parse Payload\").item.json.emergencyData.details }}",
+            "Location": "={{ $(\"Parse Payload\").item.json.emergencyData.location }}",
+            "Contact Name": "={{ $(\"Parse Payload\").item.json.emergencyData.contact_name }}",
+            "Callback Number": "={{ $(\"Parse Payload\").item.json.emergencyData.callback }}",
+            "Status": "Alert Sent"
+          }
+        },
+        "options": {}
+      },
+      "id": "sheet-emergency",
+      "name": "Sheets: Log Emergency",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1400,
+        -250
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $(\"Parse Payload\").item.json;\nreturn [{\n  json: {\n    targetEmail: payload.targetEmail,\n    customerEmail: payload.args.customer_email || payload.args.email,\n    action: payload.args.action || \"reschedule\",\n    newStart: payload.args.new_start_time || payload.args.startTime,\n    toolCallId: payload.toolId\n  }\n}];"
+      },
+      "id": "mng-prep",
+      "name": "Management Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $json.targetEmail }}",
+          "mode": "id"
+        },
+        "limit": 10,
+        "timeMin": "={{ $(\"Parse Payload\").item.json.searchStart }}",
+        "timeMax": "={{ $(\"Parse Payload\").item.json.searchEnd }}",
+        "options": {
+          "q": "={{ $(\"Management Prep\").item.json.customerEmail }}"
+        }
+      },
+      "id": "cal-search-mng",
+      "name": "Cal: Search Appt",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        250
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const events = $input.all();\nconst prep = $(\"Management Prep\").item.json;\nconst match = events.length > 0 ? events[0].json : null;\n\nreturn [{\n  json: {\n    eventId: match ? match.id : null,\n    found: !!match,\n    action: prep.action,\n    newStart: prep.newStart,\n    toolCallId: prep.toolCallId\n  }\n}];"
+      },
+      "id": "mng-logic",
+      "name": "Logic: Mng Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $(\"Management Prep\").item.json.targetEmail }}",
+          "mode": "id"
+        },
+        "eventId": "={{ $json.eventId }}",
+        "updateFields": {
+          "start": "={{ $(\"Management Prep\").item.json.newStart }}"
+        }
+      },
+      "id": "cal-update",
+      "name": "Cal: Update Appt",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1850,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $(\"Management Prep\").item.json.targetEmail }}",
+          "mode": "id"
+        },
+        "eventId": "={{ $json.eventId }}"
+      },
+      "id": "cal-delete",
+      "name": "Cal: Delete Appt",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [
+        1850,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ results: [{ toolCallId: $(\"Management Prep\").item.json.toolCallId, result: \"Operation successful. I have \" + $(\"Management Prep\").item.json.action + \"d the appointment.\" }] }) }}",
+        "options": {}
+      },
+      "id": "resp-mng",
+      "name": "Resp: Managed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2100,
+        250
+      ]
+    }
+  ],
+  "connections": {
+    "Vapi Inbound": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Security: Verify Secret",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Security: Verify Secret": {
+      "main": [
+        [
+          {
+            "node": "Parse Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "401 Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Payload": {
+      "main": [
+        [
+          {
+            "node": "Dept Router V3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dept Router V3": {
+      "main": [
+        [
+          {
+            "node": "Cal: Check Avail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cal: Book Appt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Log Question",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio: Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Search KB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Management Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transfer Prep",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resp: End of Call 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Default 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Check Avail": {
+      "main": [
+        [
+          {
+            "node": "Logic: Calc Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic: Calc Slots": {
+      "main": [
+        [
+          {
+            "node": "Resp: Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Book Appt": {
+      "main": [
+        [
+          {
+            "node": "Resp: Booked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Log Question": {
+      "main": [
+        [
+          {
+            "node": "Resp: Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Send Alert": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Log Emergency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Log Emergency": {
+      "main": [
+        [
+          {
+            "node": "Resp: Escalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Search KB": {
+      "main": [
+        [
+          {
+            "node": "Logic: KB Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic: KB Search": {
+      "main": [
+        [
+          {
+            "node": "Resp: KB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Management Prep": {
+      "main": [
+        [
+          {
+            "node": "Cal: Search Appt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Search Appt": {
+      "main": [
+        [
+          {
+            "node": "Logic: Mng Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic: Mng Action": {
+      "main": [
+        [
+          {
+            "node": "Cal: Update Appt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cal: Delete Appt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Update Appt": {
+      "main": [
+        [
+          {
+            "node": "Resp: Managed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Delete Appt": {
+      "main": [
+        [
+          {
+            "node": "Resp: Managed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Prep": {
+      "main": [
+        [
+          {
+            "node": "Gmail: Send Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail: Send Message": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Append Msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Append Msg": {
+      "main": [
+        [
+          {
+            "node": "Resp: Message Taken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transfer Prep": {
+      "main": [
+        [
+          {
+            "node": "Cal: Check Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cal: Check Transfer": {
+      "main": [
+        [
+          {
+            "node": "Logic: Trans Avail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logic: Trans Avail": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Flatten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten": {
+      "main": [
+        [
+          {
+            "node": "Resp: Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resp: End of Call 200": {
+      "main": [
+        [
+          {
+            "node": "Wait 45 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 45 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Sheets: End Call Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
